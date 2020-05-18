@@ -17,11 +17,11 @@ import keyboard
 import mouse
 import subprocess
 import os
+import ctypes
 
 
 # Initialize Variables
 ss_hotkey = 'alt + space'  # hotkey to enable screensaver
-lock_hotkey = 'windows + l'  # hotkey to lock windows computer
 ss_flag = 0  # 1 if screensaver active
 frequency = 5  # frequency of F15
 
@@ -43,22 +43,20 @@ def ss_ena(ss):
     ss_flag = 1
     time.sleep(1)
     subprocess.call(r'C:\WINDOWS\System32\\' + ss)
-    # TODO: While loop that checks for mouse or keyboard event
-    # TODO: If event, lock screen
     keyboard.hook(monitor_key)
     mouse.hook(monitor_mouse)
 
 
 def monitor_key(key):
     global ss_flag
-    # TODO: If event, lock screen
+    ctypes.windll.user32.LockWorkStation()
     keyboard.unhook_all()
     ss_flag = 0
 
 
 def monitor_mouse(move):
     global ss_flag
-    # TODO: If event, lock screen
+    ctypes.windll.user32.LockWorkStation()
     mouse.unhook_all()
     ss_flag = 0
 
