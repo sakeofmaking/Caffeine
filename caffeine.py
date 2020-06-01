@@ -24,6 +24,8 @@ import ctypes
 ss_hotkey = 'alt + space'  # hotkey to enable screensaver
 ss_flag = 0  # 1 if screensaver active
 frequency = 5  # frequency of F15
+duration = 0  # duration before enable screensaver
+chosen_duration = 0  # user picked duration
 
 
 # Press F15 every duration
@@ -43,22 +45,28 @@ def ss_ena(ss):
     ss_flag = 1
     time.sleep(1)
     subprocess.call(r'C:\WINDOWS\System32\\' + ss)
-    keyboard.hook(monitor_key)
-    mouse.hook(monitor_mouse)
 
 
+# Monitor keyboard events
 def monitor_key(key):
-    global ss_flag
-    ctypes.windll.user32.LockWorkStation()
-    keyboard.unhook_all()
-    ss_flag = 0
+    global ss_flag, duration, chosen_duration
+    # Lock on screensaver exit
+    if ss_flag == 1:
+        ctypes.windll.user32.LockWorkStation()
+        ss_flag = 0
+    # Reset duration on keyboard key
+    duration = int(chosen_duration) * 60
 
 
+# Monitor mouse events
 def monitor_mouse(move):
-    global ss_flag
-    ctypes.windll.user32.LockWorkStation()
-    mouse.unhook_all()
-    ss_flag = 0
+    global ss_flag, duration, chosen_duration
+    # Lock on screensaver exit
+    if ss_flag == 1:
+        ctypes.windll.user32.LockWorkStation()
+        ss_flag = 0
+    # Reset duration on mouse move
+    duration = int(chosen_duration) * 60
 
 
 # Main
@@ -79,18 +87,27 @@ if __name__ == "__main__":
         chosen_ss = ss_list[int(user_input) - 1]
     except ValueError:
         chosen_ss = 'Fliqlo.scr'
-    keyboard.add_hotkey(ss_hotkey, ss_ena, args=[chosen_ss], suppress=True)  # add screensaver hotkey
-    x = threading.Thread(target=caffeine_thread, daemon=True)
-    x.start()  # start caffeine thread
 
     # Select duration
     # default duration 15 min
     print('Duration before screensaver active (min): ')
-    user_input = input('>>>')
-    if not user_input:
-        user_input = 15
-    # TODO: Add while loop that checks periodically (each min), updating time_elapsed, to see if duration of no
-    # TODO: activity is exceeded. If exceeded, enable screensaver. If activity, reset duration
+    chosen_duration = input('>>>')
+    if not chosen_duration:
+        chosen_duration = 15  # because F15 frequency < duration, duration = infinity
 
+    # Start monitoring
+    keyboard.add_hotkey(ss_hotkey, ss_ena, args=[chosen_ss], suppress=True)  # add screensaver hotkey
+    x = threading.Thread(target=caffeine_thread, daemon=True)
+    x.start()  # start caffeine thread
+    keyboard.hook(monitor_key, suppress=False)
+    mouse.hook(monitor_mouse)
 
-
+    # Monitor duration
+    duration = int(chosen_duration) * 60
+    while duration > 0:
+        time.sleep(1)
+        print('duration = {}'.format(duration))
+        duration -= 1
+        if duration == 0:
+            ss_ena(chosen_ss)  # enable screensaver
+            duration = int(chosen_duration) * 60
