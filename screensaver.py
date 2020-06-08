@@ -26,8 +26,8 @@ duration = 1  # duration of inactivity before screen saver active
 def ss_ena(ss):
     global ss_flag
     ss_flag = True
-    # subprocess.call(r'C:\WINDOWS\System32\\' + ss)
-    print(ss)
+    print('{} enabled'.format(ss))
+    subprocess.call(r'C:\WINDOWS\System32\\' + ss)
 
 
 if __name__ == '__main__':
@@ -67,10 +67,11 @@ if __name__ == '__main__':
                 ss_flag = False
                 lock_flag = True
                 ctypes.windll.user32.LockWorkStation()
+                time.sleep(3)
+            elif not ss_flag and lock_flag and new_x != initial_x and new_y != initial_y:
+                lock_flag = False
             else:
                 duration_sec = int(duration) * 60
-                lock_flag = False
-            print(duration_sec)
         ss_ena(chosen_ss)
 
 
